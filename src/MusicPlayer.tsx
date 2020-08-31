@@ -10,7 +10,7 @@ interface Props {
 
 export const MusicPlayer = (props: Props) => {
   const [play, setPlay] = useState(false)
-  const audioEl = (useRef)<HTMLAudioElement>(null);
+  const audioEl = useRef<null | HTMLAudioElement>(null);
 
   const onPlay = () => {
     if (audioEl.current) {

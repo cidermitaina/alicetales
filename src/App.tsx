@@ -5,52 +5,65 @@ import { Reset } from "styled-reset";
 
 import './App.css';
 
-const clientId = "XXXXXXXXXXXXX";
-const clientSecret = "XXXXXXXXXXX";
+const clientId = "XXXXXXXXXXXX";
+const clientSecret = "XXXXXXXXXXXXXX";
 const encodedValue = btoa(`${clientId}:${clientSecret}`);
 
 const data = "grant_type=client_credentials";
 
-const getAccessToken = async ():Promise<string> => {
-  
-  const responseToken = await fetch(`https://accounts.spotify.com/api/token`, {
-    method: "POST",
-    body: data,
-    headers: {
-      Authorization: `Basic ${encodedValue}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  });
-  const tokenData = await responseToken.json();
+const getAccessToken = async () => {
+  try {
+    const responseToken = await fetch(
+      `https://accounts.spotify.com/api/token`,
+      {
+        method: "POST",
+        body: data,
+        headers: {
+          Authorization: `Basic ${encodedValue}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  return tokenData.access_token;
+    if (!responseToken.ok) {
+      throw new Error(`${responseToken.status}: ${responseToken.statusText}`);
+    } else {
+      const tokenData = await responseToken.json();
+      return tokenData.access_token;
+    }
+    
+  } catch (error) {
+    console.error(`AccessToken取得でエラーが発生しました (${error})`);
+  }
 };
   
 function App() {
 
   const [items, setItems] = useState([]);
 
-  const fetchData = () => {
-    getAccessToken()
-      .then(async (token) => {
-        const responce = await fetch(
-          "https://api.spotify.com/v1/albums/1Wz9NN8BKFHKqpw8fmKmja",
-          {
-            headers: {
-              Authorization: "Bearer " + token,
-              Accept: "application/json",
-              "Content-Type": "application/json;charset=utf-8",
-            },
-          }
-        );
-        const data = await responce.json();
-        setItems(data.tracks.items);
-      })
-      .catch((statusCode) => console.error("データが取得できていません。", statusCode));
+  const fetchData = async () => {
+    const accesToken = await getAccessToken();
+    const responce = await fetch(
+      "https://api.spotify.com/v1/albums/1Wz9NN8BKFHKqpw8fmKmja",
+      {
+        headers: {
+          Authorization: "Bearer " + accesToken,
+          Accept: "application/json",
+          "Content-Type": "application/json;charset=utf-8",
+        },
+      }
+    );
+      
+    const data = await responce.json();
+    return data.tracks.items; 
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData()
+      .then((data) => {
+        setItems(data);
+      })
+      .catch((error) => console.error("データが取得できませんでした。", error));
   }, []);
 
   return (
